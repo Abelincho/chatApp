@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat</title>
+    <link rel="stylesheet" type="text/css" href="./style.css"></link>
+    <script src="https://kit.fontawesome.com/a5191f3c7b.js" crossorigin="anonymous"></script>
+    <script type="module">
+        import {io} from 'https://cdn.socket.io/4.3.2/socket.io.esm.min.js'
+
+        const form = document.querySelector('#form')
+        const input = document.querySelector('#input')
+        const messages = document.getElementById('messages')
+
+        const socket = io({
+            auth:{
+                serverOffset: 0
+            }
+        })
+
+        socket.on('connection succes', (res) => {
+            socket.auth.uid = res.uid;
+            console.log(`El uid del socket es: ${socket.auth.uid}`)
+        })
+        socket.on('chat message', (res) => {
+            const item = document.createElement('li');
+            const p = document.createElement('p');
+            const small = document.createElement('small');
+            p.textContent = res.msg;
+
+            console.log(`El usuario ${res.sender} escribió: ${res.msg}`);
+
+            if(res.sender === socket.auth.uid){
+                item.classList.add('send-by-me');
+            }
+            else{
+                small.textContent= res.sender + ': '; 
+            }
+            item.append(small);
+            item.append(p);
+            messages.insertAdjacentElement('beforeend', item);
+            socket.auth.serverOffset = res.msgId;
+            messages.scrollTop = messages.scrollHeight;
+        })
+        
+        form.addEventListener('submit', (e) => {
+            e.preventDefault()
+
+            if(input.value) {
+                socket.emit('chat message', input.value)
+                input.value = ''
+            }
+        })
+    </script>
+    <style>
+        *,
+*::before,
+*::after{
+    box-sizing: border-box;
+    letter-spacing: .1rem;
+}
+/* :root{
+    color-scheme: light dark;
+} */
+body{
+    margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    display: grid;
+    place-content: center;
+    height: 100vh;
+    padding: 36px 36px 100px 36px;
+    grid-template-rows: 1fr;
+}
+#messages{
+    color: white;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    overflow-y:scroll;
+    height: 93vh;
+    scroll-behavior: smooth;
+    /* padding-bottom: 60px; */
+}
+#messages>li{
+    padding: .5rem 1rem;
+    list-style: none;
+    margin: 8px;
+    padding: 4px 12px;
+    /* min-width: 100px; */
+    border-radius: 10px;
+    border-top-left-radius: 0px;
+    background-color: rgba(0, 169, 217, .15);
+    color:white;
+    margin-right: 20%;
+}
+#messages>li>small{
+    /* letter-spacing: 0.05em; */
+    /* color: aquamarine; */
+    color: rgba(255, 255, 255, 0.85);
+}
+#messages>li.send-by-me{
+    align-self: end;
+    /* text-align: right; */
+    background-color: rgba(127, 127, 127, .5);
+    border-radius: 10px;
+    border-top-right-radius: 0px;
+    margin-right: 0;
+    margin-left:20%;
+
+}
+
+#chat{
+    /* border: 1px solid #ccc; */
+    /* border-right: 1px solid #ccc; */
+    /* border-radius: 4px; */
+    overflow: hidden;
+    width: 500px;
+    height: 100vh;
+    position: absolute;
+    top: 0;
+    left: 5px;
+    
+}
+#form{
+    bottom: 0;
+    border-top-right-radius: 10px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    height: 7vh;
+    
+    left: 0;
+    padding: 10px;
+    position: absolute;
+    right: 0;
+    
+    background: transparent;
+    
+}
+#input{
+    border-radius:  9999px;
+    border: solid 1px #333;
+    flex: 1;
+    margin: 4px;
+    padding: 0.5rem 1rem;
+    height: 3rem;
+    color:#333;
+    font-size: 1rem;
+    /* background-color: rgba(230, 249, 255, 0.95); */
+    background: transparent;
+    color: white;
+    border: solid white 1px;
+}
+#input:focus{
+    outline: 0;
+}
+#form > button{
+    /* background-color: #09f; */
+    /* background-color: rgba(0, 169, 217, 1);  */
+    /* color: white;
+    /* background-color: rgba(0, 169, 217, 0.75);
+    color: white;*/
+    
+    border: 0;
+    margin: 4px;
+    border-radius: 6px;
+    letter-spacing: 0.3rem;
+    background: transparent;
+    color: white;
+    border: 0;
+    padding: 6px 12px;
+    font-size: 1rem;
+    margin-left: 0.5rem;;
+    height: fit-content;
+    border: solid white 1px;
+    cursor: pointer;
+}
+#form>button:hover{
+    color: rgba(0, 169, 217, 0.75);
+
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+#messages::-webkit-scrollbar {
+    display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+#messages {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+html, body{
+    user-select: none !important;
+    cursor: default !important;
+}
+.space-container{
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: black;
+    background-image: linear-gradient(
+        to top, 
+        rgba(0, 169, 217, .5) 0%,
+        rgba(0, 169, 217, .3) 0%,
+        rgba(0, 169, 217, .0) 70%);
+}
+.space{
+    --size: 2px;
+    --space-layer:
+        4vw 50vh 0 #fff,
+        18vw 88vh 0 #fff;
+    
+        width: var(--size);
+        height: var(--size);
+        background: #fff;
+        box-shadow: var(--space-layer);
+        position: absolute;
+        top:0;
+        left:0;
+        opacity: 75%;
+        animation: moveStars var(--duration) linear infinite;
+        border-radius: 50%;
+}
+@keyframes moveStars{
+    from { transform: translate(0, 0);}
+    to { transform: translate(-8vw, -100vh);}
+}
+    </style>
+</head>
+<body>
+    <!-- <div id="login-form">
+        <p>Inicio de sesión</p>
+        <input type="email" id="login-email">
+        <input type="password" id="login-password">
+        <button type="submit">Iniciar Sesión</button>
+        <p>¿Todavía no tienes una cuenta? Regístrate aquí</p>
+    </div>
+    <div id="signup-form">
+        <p>Registro de usuario</p>
+        <input type="email" id="login-email">
+        <input type="password" id="login-password">
+        <button type="submit">Registrar</button>
+        <p>¿Ya tienes una cuenta? Inicia sesión aquí</p>
+    </div> -->
+    <div class="space-container">
+        <div class="space space-1"></div>
+        <div class="space space-2"></div>
+        <div class="space space-3"></div>
+    </div>
+    <section id="chat">
+        <ul id="messages">
+
+        </ul>
+        <form id="form">
+            <input type="text" name="message" id="input" placeholder="Escribe un mensaje" autocomplete="off" />
+            <button type="submit">Enviar</button>
+        </form>
+    </section>
+</body>
+<script>
+    const COLORS = ["#fff2", "#fff4", "#fff7", "#fffc"];
+    const generateSpaceLayer = (size, selector, totalStars, duration) => {
+        const layer = [];
+        for(let i = 0; i < totalStars; i++){
+            const color = COLORS[Math.floor(Math.random() * COLORS.length)];
+            const x = Math.floor(Math.random() * 100);
+            const y = Math.floor(Math.random() * 100);
+            layer.push(`${x}vw ${y}vh 0 ${color}, ${x}vw ${y + 100}vh 0 ${color}`);
+        }
+        const container = document.querySelector(selector);
+        container.style.setProperty("--space-layer", layer.join(','));
+        container.style.setProperty("--size", size);
+        container.style.setProperty("--duration", duration)
+    };
+
+    generateSpaceLayer('1px', '.space-1', 900, "600s");
+    generateSpaceLayer('1.5px', '.space-2', 225, "300s");
+    generateSpaceLayer('2px', '.space-3', 100, "240s");
+</script>
+</html>
